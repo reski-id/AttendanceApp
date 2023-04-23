@@ -12,21 +12,15 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-// @title           Swagger Costumer APP
+// @title           Swagger Attendance APP
 // @version         2.0
-// @description     This is a swagger documentation for Costumer APP.
+// @description     This is a swagger documentation for Attendance APP.
 // @BasePath        /api/v1
 // @host            localhost:8080
 // @schemes         http https
 // @SecurityDefinition  jwt
 // @Security        jwt
 func main() {
-	//setting env
-	// err := godotenv.Load()
-	// if err != nil {
-	// 	fmt.Println("Error loading .env file")
-	// 	os.Exit(1)
-	// }
 
 	//migrate and seeder
 	seed.CreateMigration()
