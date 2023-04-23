@@ -17,10 +17,19 @@ type ClockOut struct {
 	CreatedAt    time.Time `gorm:"not null" json:"created_at"`
 }
 
+type WorkingHours struct {
+	ID          uint      `json:"id" gorm:"primary_key"`
+	EmployeeID  int       `json:"employee_id" gorm:"not null"`
+	HoursWorked string    `json:"hours_worked" gorm:"not null"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 type ClockResponse struct {
-	ID          uint    `json:"id"`
-	EmployeeID  int     `json:"employee_id"`
-	ClockType   string  `json:"clock_type"`
-	ClockTime   string  `json:"clock_time"`
-	HoursWorked float64 `json:"hour_work"`
+	ID         uint      `json:"id"`
+	EmployeeID int       `json:"employee_id"`
+	ClockType  string    `json:"clock_type"`
+	ClockTime  time.Time `json:"clock_time"`
+	Hours      int       `json:"hours"`
+	Minutes    int       `json:"minutes"`
 }

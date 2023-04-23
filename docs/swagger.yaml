@@ -1,5 +1,20 @@
 basePath: /api/v1
 definitions:
+  models.ClockResponse:
+    properties:
+      clock_time:
+        type: string
+      clock_type:
+        type: string
+      employee_id:
+        type: integer
+      hours:
+        type: integer
+      id:
+        type: integer
+      minutes:
+        type: integer
+    type: object
   models.CreateEmployeeResponse:
     properties:
       address:
@@ -67,40 +82,6 @@ definitions:
       message:
         type: string
     type: object
-  models.Product:
-    properties:
-      createdAt:
-        type: string
-      description:
-        type: string
-      file:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: number
-      qty:
-        type: integer
-      sku:
-        type: string
-      updatedAt:
-        type: string
-    required:
-    - name
-    - price
-    - qty
-    type: object
-  models.ProductsResponse:
-    properties:
-      count:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/models.Product'
-        type: array
-    type: object
   models.TokenResponse:
     properties:
       email:
@@ -119,25 +100,127 @@ info:
   title: Swagger Costumer APP
   version: "2.0"
 paths:
-  /employees:
-    get:
+  /attendance/clock-in/{id}:
+    post:
       consumes:
       - application/json
-      description: Get a list of employees, paginated by `page` and `limit` query
-        parameters
+      description: Clocks in an employee and returns the clock-in time
       parameters:
       - description: Bearer {token}
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Page number (default 1)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ClockResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Clocks in an employee
+      tags:
+      - Attendance
+  /attendance/clock-out/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Clocks out an employee and returns the clock-out time and hours
+        worked
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ClockResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Clocks out an employee
+      tags:
+      - Attendance
+  /attendance/work-hours/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get the total number of hours an employee has worked based on their
+        clock-in and clock-out entries
+      operationId: get-work-hours
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ClockResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get total work hours for an employee
+      tags:
+      - Attendance
+  /employees:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of employees with pagination
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Page number
         in: query
         name: page
+        required: true
         type: integer
-      - description: Number of employees per page (default 10)
+      - description: Number of items per page
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -145,9 +228,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Employee'
-            type: array
+            $ref: '#/definitions/models.Employee'
         "401":
           description: Unauthorized
           schema:
@@ -343,7 +424,6 @@ paths:
     post:
       consumes:
       - application/json
-      - ' multipart/form-data'
       description: Login to the system with username and password
       parameters:
       - description: Login Data
@@ -352,16 +432,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/models.LoginData'
-      - description: Username
-        in: formData
-        name: username
-        required: true
-        type: string
-      - description: Password
-        in: formData
-        name: password
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -384,233 +454,6 @@ paths:
       summary: Login to the system
       tags:
       - Auth
-  /products:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of products with pagination support
-      parameters:
-      - description: Page number (default 1)
-        in: query
-        name: page
-        type: integer
-      - description: Number of items per page (default 10)
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.ProductsResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      summary: Get a list of products
-      tags:
-      - products
-    post:
-      consumes:
-      - application/json
-      description: Create a new product with the specified details
-      parameters:
-      - description: Bearer {token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: Product details
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/models.Product'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/models.Product'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Create a new product
-      tags:
-      - products
-  /products/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a product with the specified ID
-      parameters:
-      - description: Bearer {token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.MessageResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete a product
-      tags:
-      - products
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a product by ID
-      parameters:
-      - description: Bearer {token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Product'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Get a product by ID
-      tags:
-      - products
-    put:
-      consumes:
-      - application/json
-      description: Update a product with the specified ID
-      parameters:
-      - description: Bearer {token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Product details
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/models.Product'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Product'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Update a product
-      tags:
-      - products
-  /products/search:
-    get:
-      consumes:
-      - application/json
-      description: Search products with a matching name
-      parameters:
-      - description: Search query
-        in: query
-        name: query
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Product'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      summary: Search products
-      tags:
-      - products
   /register:
     post:
       consumes:
@@ -630,7 +473,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.TokenResponse'
+            $ref: '#/definitions/models.CreateEmployeeResponse'
         "400":
           description: Bad Request
           schema:

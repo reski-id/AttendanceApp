@@ -15,6 +15,18 @@ import (
 
 type AttendanceController struct{}
 
+// ClockIn
+// @Summary Clocks in an employee
+// @Description Clocks in an employee and returns the clock-in time
+// @Tags Attendance
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {object} models.ClockResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /attendance/clock-in/{id} [post]
 func (ac *AttendanceController) ClockIn(c echo.Context) error {
 	employeeID, _, err := utils.ExtractData(c)
 	if err != nil {
@@ -26,7 +38,7 @@ func (ac *AttendanceController) ClockIn(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: err.Error()})
 	}
 
-	clockIn := models.ClockIn{EmployeeID: employeeID}
+	clockIn := models.ClockIn{EmployeeID: employeeID, ClockInTime: time.Now()}
 	if err := db.Create(&clockIn).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: err.Error()})
 	}
@@ -37,10 +49,23 @@ func (ac *AttendanceController) ClockIn(c echo.Context) error {
 		ID:         clockIn.ID,
 		EmployeeID: clockIn.EmployeeID,
 		ClockType:  "clock_in",
-		ClockTime:  clockIn.CreatedAt.Format("2006-01-02 15:04:05"),
+		ClockTime:  time.Now(),
 	})
 }
 
+// ClockOut
+// @Summary Clocks out an employee
+// @Description Clocks out an employee and returns the clock-out time and hours worked
+// @Tags Attendance
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {object} models.ClockResponse
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /attendance/clock-out/{id} [post]
 func (ac *AttendanceController) ClockOut(c echo.Context) error {
 	employeeID, _, err := utils.ExtractData(c)
 	if err != nil {
@@ -58,31 +83,52 @@ func (ac *AttendanceController) ClockOut(c echo.Context) error {
 	}
 
 	var existingClockOut models.ClockOut
-	if err := db.Where("employee_id = ? AND clock_in_id = ?", employeeID, lastClockIn.ID).First(&existingClockOut).Error; err != nil {
+	if err := db.Where("employee_id = ? AND id = ?", employeeID, lastClockIn.ID).First(&lastClockIn).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: err.Error()})
 	}
 	if existingClockOut.ID != 0 {
 		return c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "You have already clocked out for this shift"})
 	}
 
-	clockOut := models.ClockOut{EmployeeID: employeeID, ClockInID: lastClockIn.ID}
+	clockOut := models.ClockOut{EmployeeID: employeeID, ClockInID: lastClockIn.ID, ClockOutTime: time.Now()}
 	if err := db.Create(&clockOut).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: err.Error()})
 	}
 
 	// go ac.sendClockInReminder(clockOut.EmployeeID, clockOut.CreatedAt.AddDate(0, 0, 1))
 
-	hoursWorked := clockOut.CreatedAt.Sub(lastClockIn.CreatedAt).Hours()
+	hoursWorked := clockOut.CreatedAt.Sub(lastClockIn.CreatedAt)
+	hours := int(hoursWorked.Hours())
+	minutes := int(hoursWorked.Minutes()) % 60
+	workingHours := models.WorkingHours{EmployeeID: employeeID, HoursWorked: fmt.Sprintf("%d hour(s) %d minute(s)", hours, minutes)}
+	if err := db.Create(&workingHours).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: err.Error()})
+	}
 
 	return c.JSON(http.StatusOK, models.ClockResponse{
-		ID:          clockOut.ID,
-		EmployeeID:  clockOut.EmployeeID,
-		ClockType:   "clock_out",
-		ClockTime:   clockOut.CreatedAt.Format("2006-01-02 15:04:05"),
-		HoursWorked: hoursWorked,
+		ID:         clockOut.ID,
+		EmployeeID: clockOut.EmployeeID,
+		ClockType:  "clock_out",
+		ClockTime:  clockOut.ClockOutTime,
+		Hours:      hours,
+		Minutes:    minutes,
 	})
 }
 
+// GetWorkHours godoc
+// @Summary Get total work hours for an employee
+// @Description Get the total number of hours an employee has worked based on their clock-in and clock-out entries
+// @Tags Attendance
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @ID get-work-hours
+// @Produce json
+// @Success 200 {object} models.ClockResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /attendance/work-hours/{id} [get]
 func (ac *AttendanceController) GetWorkHours(c echo.Context) error {
 	// Get employee ID from JWT token
 	employeeID, _, err := utils.ExtractData(c)
@@ -116,9 +162,9 @@ func (ac *AttendanceController) GetWorkHours(c echo.Context) error {
 	}
 
 	response := models.ClockResponse{
-		EmployeeID:  employeeID,
-		ClockType:   "work_hours",
-		HoursWorked: totalHours,
+		EmployeeID: employeeID,
+		ClockType:  "work_hours",
+		// HoursWorked: totalHours,
 	}
 	return c.JSON(http.StatusOK, response)
 }

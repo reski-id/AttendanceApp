@@ -2,8 +2,8 @@ package main
 
 import (
 	"attendance/controllers"
-	"attendance/utils"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -12,6 +12,7 @@ import (
 	seed "attendance/seeder"
 
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 // @title           Swagger Costumer APP
@@ -30,24 +31,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	//test email
-	to := "reski.devel@gmail.com"
-	subject := "Test Email dari main,go"
-	body := "This is a test email sent from Go Attenddance in main.go!"
-
-	errem := utils.SendEmail(to, subject, body)
-	if errem != nil {
-		fmt.Println("Error sending email:", errem)
-		return
-	}
-
-	fmt.Println("Email sent successfully!")
-
 	//migrate and seeder
 	seed.CreateMigration()
 	seed.SeedUsers()
 
 	router := echo.New()
+	// Serve Swagger UI
+	router.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
@@ -71,6 +61,11 @@ func main() {
 	v1.POST("/attendance/clock-in/:id", attendanceController.ClockIn)
 	v1.POST("/attendance/clock-out/:id", attendanceController.ClockOut)
 	v1.GET("/attendance/work-hours/:id", attendanceController.GetWorkHours)
+
+	// new endpoint to check if service is running
+	router.GET("/", func(c echo.Context) error {
+		return c.HTML(http.StatusOK, fmt.Sprintf(`Attendance management system is running! <br/><a href="http://localhost:8080/swagger/index.html">View Swagger UI</a>`))
+	})
 
 	router.Logger.Fatal(router.Start(":8080"))
 }
