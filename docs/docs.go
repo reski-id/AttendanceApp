@@ -757,8 +757,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{"http", "https"},
-	Title:            "Swagger Costumer APP",
-	Description:      "This is a swagger documentation for Costumer APP.",
+	Title:            "Swagger Attendance APP",
+	Description:      "This is a swagger documentation for Attendance APP.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

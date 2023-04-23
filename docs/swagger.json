@@ -5,8 +5,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a swagger documentation for Costumer APP.",
-        "title": "Swagger Costumer APP",
+        "description": "This is a swagger documentation for Attendance APP.",
+        "title": "Swagger Attendance APP",
         "contact": {},
         "version": "2.0"
     },
