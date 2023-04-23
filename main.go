@@ -4,9 +4,6 @@ import (
 	"attendance/controllers"
 	"fmt"
 	"net/http"
-	"os"
-
-	"github.com/joho/godotenv"
 
 	docs "attendance/docs"
 	seed "attendance/seeder"
@@ -25,11 +22,11 @@ import (
 // @Security        jwt
 func main() {
 	//setting env
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-		os.Exit(1)
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	fmt.Println("Error loading .env file")
+	// 	os.Exit(1)
+	// }
 
 	//migrate and seeder
 	seed.CreateMigration()
