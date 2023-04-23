@@ -12,6 +12,18 @@ import (
 
 type AuthController struct{}
 
+// Login godoc
+// @Summary Login to the system
+// @Description Login to the system with username and password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param loginData body  models.LoginData true "Login Data"
+// @Success 200 {object} models.TokenResponse
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /login [post]
 func (auth *AuthController) Login(c echo.Context) error {
 	var loginData models.LoginData
 
@@ -55,7 +67,7 @@ func (auth *AuthController) Login(c echo.Context) error {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param registrationData body models.User true "Registration Data"
+// @Param registrationData body  models.Employee true "Registration Data"
 // @Success 200 {object} models.CreateEmployeeResponse
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse

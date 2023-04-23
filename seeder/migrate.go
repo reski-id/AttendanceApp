@@ -12,5 +12,5 @@ func CreateMigration() {
 	}
 
 	// Auto migrate all entities
-	db.AutoMigrate(&models.Employee{})
+	db.AutoMigrate(&models.Employee{}, &models.ClockIn{}, &models.ClockOut{}, &models.WorkingHours{})
 }

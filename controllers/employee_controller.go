@@ -13,6 +13,20 @@ import (
 
 type EmployeeController struct{}
 
+// GetEmployees godoc
+// @Summary Get a list of employees
+// @Description Get a list of employees with pagination
+// @Tags Employees
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param page query int true "Page number"
+// @Param limit query int true "Number of items per page"
+// @Success 200 {object} models.Employee
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /employees [get]
 func (controller EmployeeController) GetEmployees(c echo.Context) error {
 	_, role, err := utils.ExtractData(c)
 
